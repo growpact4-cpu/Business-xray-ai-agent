@@ -1,0 +1,190 @@
+{
+  "name": "Business Analysis Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Business Analysis Request",
+        "formDescription": "Enter the industry, country, and optionally specific company names to analyze.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Industry",
+              "fieldName": "industry",
+              "placeholder": "e.g., Electric Vehicles, SaaS, Renewable Energy",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Country",
+              "fieldName": "country",
+              "placeholder": "e.g., United States, Germany, India",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Company Names (Optional)",
+              "fieldType": "textarea",
+              "fieldName": "companies",
+              "placeholder": "Enter company names separated by commas (optional)"
+            }
+          ]
+        },
+        "options": {
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "Thank you! Your business analysis is being generated and will be available shortly."
+            }
+          }
+        }
+      },
+      "id": "54506a9e-a0e4-4511-8e81-6a833e93cc57",
+      "name": "Business Analysis Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        240,
+        304
+      ],
+      "webhookId": "0611146d-b790-4c47-b0a4-595750b96153"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Conduct a comprehensive business analysis for the {{ $json.industry }} industry in {{ $json.country }}.{{ $json.companies ? \" Focus on these companies: \" + $json.companies + \".\" : \"\" }}\n\nProvide a detailed analysis covering:\n1. Industry Overview: Market size, trends, growth drivers\n2. Customers: Target segments, needs, buying behavior\n3. Value Chain: Key activities, suppliers, partners\n4. Distribution: Channels, logistics, reach strategies\n5. Competition: Major players, market share, competitive dynamics\n6. Opportunities: Growth areas, unmet needs, emerging trends\n7. Risks: Regulatory, economic, technological, competitive threats\n8. Entry Strategy: Recommended approach for market entry\n\nBe specific, data-driven, and actionable in your analysis.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an expert business analyst with deep knowledge of global markets, industries, and competitive strategy. Provide thorough, well-researched analysis based on current market conditions and trends.",
+          "maxIterations": 15
+        }
+      },
+      "id": "5813dc39-59fe-4c22-81e8-ca2bf747c0ae",
+      "name": "Business Analysis Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        464,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {
+          "temperature": null
+        }
+      },
+      "id": "4f966d30-6150-4027-92cf-2344f51f45fd",
+      "name": "OpenAI GPT-5",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        528
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "TOu8RE86tif3Rgym",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual"
+      },
+      "id": "7214b326-83b5-4e80-bc37-fc23b796ab4c",
+      "name": "Business Analysis Schema",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        608,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "markdown_report",
+              "type": "string",
+              "value": "=# Business Analysis Report\n\n**Industry:** {{ $(\"Business Analysis Form\").item.json.industry }}\n**Country:** {{ $(\"Business Analysis Form\").item.json.country }}\n{{ $(\"Business Analysis Form\").item.json.companies ? \"**Companies:** \" + $(\"Business Analysis Form\").item.json.companies + \"\\n\" : \"\" }}**Generated:** {{ $now.toFormat(\"MMMM d, yyyy\") }}\n\n---\n\n## Industry Overview\n\n{{ $json.output.industry_overview }}\n\n## Customers\n\n{{ $json.output.customers }}\n\n## Value Chain\n\n{{ $json.output.value_chain }}\n\n## Distribution\n\n{{ $json.output.distribution }}\n\n## Competition\n\n{{ $json.output.competition }}\n\n## Opportunities\n\n{{ $json.output.opportunities }}\n\n## Risks\n\n{{ $json.output.risks }}\n\n## Entry Strategy\n\n{{ $json.output.entry_strategy }}\n\n---\n\n*This analysis was generated using AI and should be validated with current market research.*"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "79ae67ba-2b62-4da4-bd39-e7685429f8a6",
+      "name": "Format Markdown Report",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        816,
+        304
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Business Analysis Form": {
+      "main": [
+        [
+          {
+            "node": "Business Analysis Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Business Analysis Agent": {
+      "main": [
+        [
+          {
+            "node": "Format Markdown Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI GPT-5": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Business Analysis Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Business Analysis Schema": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Business Analysis Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "5ec97611-6ae8-472d-8a6c-8a4491b75c9c",
+  "meta": {
+    "instanceId": "d49fed6ad85e4e409490e4b30b5fa941e03a3a2e381e18d88b1c81fe078384b5"
+  },
+  "nodeGroups": [],
+  "id": "SlsYNZVBoXmYGwbn",
+  "tags": []
+}
